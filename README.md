@@ -1,7 +1,7 @@
 # Project Data Visualization
 
 ## Requirements
-- curl
+- curl 
 
 ## Instalation
 run the download_data.sh file
