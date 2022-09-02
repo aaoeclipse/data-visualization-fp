@@ -462,3 +462,394 @@ ggsave("results/pre_most_common_places.png",
 )
 
 # Adding map positions
+a <- crimes
+class(a)
+names(a)
+# convert to spatial object
+a <- st_as_sf(a, coords = c("longitude", "latitude"), crs = 4326)
+
+library(ggmap)
+library(sf)
+library(tidyverse)
+## 6. get the bbox(bounding box) for the final map adding some margins space ####
+bbox <- st_bbox(a)
+
+left <- (as.numeric(bbox[1]) - mean(as.numeric(bbox[c(1, 3)]))) * 1.5 + mean(as.numeric(bbox[c(1, 3)]))
+right <- (as.numeric(bbox[3]) - mean(as.numeric(bbox[c(1, 3)]))) * 1.5 + mean(as.numeric(bbox[c(1, 3)]))
+bottom <- (as.numeric(bbox[2]) - mean(as.numeric(bbox[c(2, 4)]))) * 1.5 + mean(as.numeric(bbox[c(2, 4)]))
+top <- (as.numeric(bbox[4]) - mean(as.numeric(bbox[c(2, 4)]))) * 1.5 + mean(as.numeric(bbox[c(2, 4)]))
+
+## 7. Get a map tile for using it as background image #####
+chicago <- get_stamenmap(
+    bbox = c(
+        left = left,
+        bottom = bottom,
+        right = right,
+        top = top
+    ),
+    zoom = 12,
+    maptype = c("toner-lite"),
+    crop = TRUE,
+    messaging = FALSE
+)
+
+chicago <- ggmap(chicago)
+chicago
+
+## 8. Plot the original John snow data and save the maps as an image. #####
+
+theft <- crime_df %>% filter(primary_type == "THEFT")
+theft <- st_as_sf(theft, coords = c("longitude", "latitude"), crs = 4326)
+battery <- crime_df %>% filter(primary_type == "BATTERY")
+battery <- st_as_sf(battery, coords = c("longitude", "latitude"), crs = 4326)
+damage <- crime_df %>% filter(primary_type == "CRIMINAL DAMAGE")
+damage <- st_as_sf(damage, coords = c("longitude", "latitude"), crs = 4326)
+assault <- crime_df %>% filter(primary_type == "ASSAULT")
+assault <- st_as_sf(assault, coords = c("longitude", "latitude"), crs = 4326)
+deception <- crime_df %>% filter(primary_type == "DECEPTIVE PRACTICE")
+deception <- st_as_sf(deception, coords = c("longitude", "latitude"), crs = 4326)
+
+
+soho1 <- chicago +
+    geom_sf(
+        data = a,
+        size = 1,
+        color = "#0404B4",
+        inherit.aes = FALSE
+    ) +
+    labs(
+        title = "Cholera 1854",
+        subtitle = "Soho",
+        x = "\nLongitude",
+        y = "Latidude\n",
+        caption = "\nElaboration: Dr. Juan Galeano\nData: Dr. Jonh Snow"
+    ) +
+    theme_HS
+
+soho1
+ggsave("cholera_snow1.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+## 9. Plot a heatmad (2D density map) and save it #####
+a <- cbind(a, st_coordinates(a))
+
+soho2 <- chicago +
+    stat_density2d(aes(
+        x = X,
+        y = Y,
+        fill = ..level..
+    ), # colour= ..level..
+    alpha = .15,
+    bins = 25,
+    color = "black",
+    size = .1,
+    data = a,
+    geom = "polygon"
+    ) +
+    scale_fill_gradient2("Reported Crime",
+        low = "#2b83ba",
+        mid = "#ffffbf",
+        high = "#d7191c",
+        midpoint = 50
+    ) +
+    labs(
+        title = "All Crime Reports",
+        subtitle = "Chicago",
+        x = "\nLongitude",
+        y = "Latidude\n",
+    ) +
+    theme_HS +
+    theme(legend.position = "right")
+
+soho2
+ggsave("results/maps/all.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+
+# THEFT
+soho_theft <- chicago +
+    geom_sf(
+        data = theft,
+        size = 1,
+        color = "#0404B4",
+        inherit.aes = FALSE
+    ) +
+    theme_HS
+
+soho_theft
+ggsave("cholera_snow1.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+theft <- cbind(theft, st_coordinates(theft))
+
+soho2 <- chicago +
+    stat_density2d(aes(
+        x = X,
+        y = Y,
+        fill = ..level..
+    ), # colour= ..level..
+    alpha = .15,
+    bins = 25,
+    color = "black",
+    size = .1,
+    data = theft,
+    geom = "polygon"
+    ) +
+    scale_fill_gradient2("Reported Crime",
+        low = "#2b83ba",
+        mid = "#ffffbf",
+        high = "#d7191c",
+        midpoint = 100
+    ) +
+    labs(
+        title = "Theft Crime Reports",
+        subtitle = "Chicago",
+        x = "\nLongitude",
+        y = "Latidude\n",
+    ) +
+    theme_HS +
+    theme(legend.position = "right")
+
+soho2
+ggsave("results/maps/theft_map.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+# ASSAULT
+soho1 <- chicago +
+    geom_sf(
+        data = assault,
+        size = 1,
+        color = "#0404B4",
+        inherit.aes = FALSE
+    ) +
+    theme_HS
+
+soho1
+ggsave("cholera_snow1.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+assault <- cbind(assault, st_coordinates(assault))
+
+soho2 <- chicago +
+    stat_density2d(aes(
+        x = X,
+        y = Y,
+        fill = ..level..
+    ), # colour= ..level..
+    alpha = .15,
+    bins = 25,
+    color = "black",
+    size = .1,
+    data = assault,
+    geom = "polygon"
+    ) +
+    scale_fill_gradient2("Reported Crime",
+        low = "#2b83ba",
+        mid = "#ffffbf",
+        high = "#d7191c",
+        midpoint = 20
+    ) +
+    labs(
+        title = "Assault Crime Reports",
+        subtitle = "Chicago",
+        x = "\nLongitude",
+        y = "Latidude\n",
+    ) +
+    theme_HS +
+    theme(legend.position = "right")
+
+soho2
+ggsave("results/maps/assault_map.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+# BATTERY
+soho1 <- chicago +
+    geom_sf(
+        data = battery,
+        size = 1,
+        color = "#0404B4",
+        inherit.aes = FALSE
+    ) +
+    theme_HS
+
+soho1
+ggsave("cholera_snow1.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+battery <- cbind(battery, st_coordinates(battery))
+
+soho2 <- chicago +
+    stat_density2d(aes(
+        x = X,
+        y = Y,
+        fill = ..level..
+    ), # colour= ..level..
+    alpha = .15,
+    bins = 25,
+    color = "black",
+    size = .1,
+    data = battery,
+    geom = "polygon"
+    ) +
+    scale_fill_gradient2("Reported Crime",
+        low = "#2b83ba",
+        mid = "#ffffbf",
+        high = "#d7191c",
+        midpoint = 2
+    ) +
+    labs(
+        title = "Battery Crime Reports",
+        subtitle = "Chicago",
+        x = "\nLongitude",
+        y = "Latidude\n",
+    ) +
+    theme_HS +
+    theme(legend.position = "right")
+
+soho2
+ggsave("results/maps/battery_map.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+# CRIMINAL DAMAGE
+soho1 <- chicago +
+    geom_sf(
+        data = damage,
+        size = 1,
+        color = "#0404B4",
+        inherit.aes = FALSE
+    ) +
+    theme_HS
+
+soho1
+ggsave("cholera_snow1.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+damage <- cbind(damage, st_coordinates(damage))
+
+soho2 <- chicago +
+    stat_density2d(aes(
+        x = X,
+        y = Y,
+        fill = ..level..
+    ), # colour= ..level..
+    alpha = .15,
+    bins = 25,
+    color = "black",
+    size = .1,
+    data = damage,
+    geom = "polygon"
+    ) +
+    scale_fill_gradient2("Crime Reports",
+        low = "#2b83ba",
+        mid = "#ffffbf",
+        high = "#d7191c",
+        midpoint = 20
+    ) +
+    labs(
+        title = "Damage Crime Reports",
+        subtitle = "Chicago",
+        x = "\nLongitude",
+        y = "Latidude\n",
+    ) +
+    theme_HS +
+    theme(legend.position = "right")
+
+soho2
+ggsave("results/maps/damage_map.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+# DECEPTIVE PRACTICE
+soho1 <- chicago +
+    geom_sf(
+        data = deception,
+        size = 1,
+        color = "#0404B4",
+        inherit.aes = FALSE
+    ) +
+    theme_HS
+
+soho1
+ggsave("cholera_snow1.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
+
+deception <- cbind(deception, st_coordinates(deception))
+
+soho2 <- chicago +
+    stat_density2d(aes(
+        x = X,
+        y = Y,
+        fill = ..level..
+    ), # colour= ..level..
+    alpha = .15,
+    bins = 25,
+    color = "black",
+    size = .1,
+    data = deception,
+    geom = "polygon"
+    ) +
+    scale_fill_gradient2("Crime Reports",
+        low = "#2b83ba",
+        mid = "#ffffbf",
+        high = "#d7191c",
+        midpoint = 50
+    ) +
+    labs(
+        title = "Deceptive Practice Crime Reports",
+        subtitle = "Chicago",
+        x = "\nLongitude",
+        y = "Latidude\n",
+    ) +
+    theme_HS +
+    theme(legend.position = "right")
+
+soho2
+ggsave("results/maps/deception_map.png",
+    scale = 1,
+    height = 12,
+    width = 20,
+    dpi = 300
+)
